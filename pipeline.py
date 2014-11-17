@@ -9,6 +9,10 @@ class Pipeline:
 
     def __init__(self, data, fileName=True):
         
+        data_stages = ['IF', 'ID', 'EXE', 'MEM', 'WB']
+        add_stages  = ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB']
+        mult_stages = ['IF', 'ID', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'MEM', 'WB']
+
         #Initialize all integer registers to zero
         self.IRegs = {}
         for reg_num in range(0,32):
@@ -62,3 +66,8 @@ class Pipeline:
         code_regex = re.compile(r'(L\.D|S\.D|ADD\.D|SUB\.D|MUL\.D)\s+([^\s,]+),\s+([^\s,]+),?(?:\s*([^\sLSAM]+))?\s*')
         self.Code = code_regex.findall(self.file_contents)
         
+    def get_data_dependencies(self):
+        for instruction in self.Code[1:]:
+            print(instruction)
+    
+    #def execute_instructions(self):

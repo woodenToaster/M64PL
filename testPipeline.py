@@ -56,6 +56,12 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(pipeline.Code[0], ('ADD.D', 'F1', 'F2', 'F3'))
         self.assertEqual(pipeline.Code[1], ('L.D', 'F1', '0(R2)', ''))
 
+    def testGetDataDependencies(self):
+        pipeline = Pipeline('project-input.0.txt')
+        pipeline.get_data_dependencies()
+        
+if __name__ == '__main__':
+    unittest.main()
 
 
 
