@@ -59,7 +59,18 @@ class TestPipeline(unittest.TestCase):
     def testGetDataDependencies(self):
         pipeline = Pipeline('project-input.0.txt')
         pipeline.get_data_dependencies()
-        
+        self.assertEqual(pipeline.data_dep[0], (2,0))
+        self.assertEqual(pipeline.data_dep[1], (2,1))
+        self.assertEqual(pipeline.data_dep[2], (3,2))
+        self.assertEqual(pipeline.data_dep[3], (5,1))
+        self.assertEqual(pipeline.data_dep[4], (5,2))
+        self.assertEqual(pipeline.data_dep[5], (5,4))
+        self.assertEqual(pipeline.data_dep[6], (6,2))
+        self.assertEqual(pipeline.data_dep[7], (6,4))
+        self.assertEqual(pipeline.data_dep[8], (7,0))
+        self.assertEqual(pipeline.data_dep[9], (7,1))
+        self.assertEqual(pipeline.data_dep[10], (7,5))
+
 if __name__ == '__main__':
     unittest.main()
 

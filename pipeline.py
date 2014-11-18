@@ -13,6 +13,8 @@ class Pipeline:
         add_stages  = ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB']
         mult_stages = ['IF', 'ID', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'MEM', 'WB']
 
+        self.data_dep = []
+
         #Initialize all integer registers to zero
         self.IRegs = {}
         for reg_num in range(0,32):
@@ -67,7 +69,15 @@ class Pipeline:
         self.Code = code_regex.findall(self.file_contents)
         
     def get_data_dependencies(self):
-        for instruction in self.Code[1:]:
-            print(instruction)
-    
+        for i in range(1, len(self.Code)):
+            for j in range(0, i):
+                if self.Code[i][2] == self.Code[j][1] or self.Code[i][3] == self.Code[j][1]:
+                    self.data_dep.append((i, j))
+        
     #def execute_instructions(self):
+
+
+    #def add_stalls(num_stalls, list):
+        #for i in range(num_stalls):
+            #list[1:1] = ['s']
+        #return list
