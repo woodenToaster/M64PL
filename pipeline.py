@@ -7,13 +7,14 @@ import re
 
 class Pipeline:
 
+    data_stages = ['IF', 'ID', 'EXE', 'MEM', 'WB']
+    add_stages  = ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB']
+    mult_stages = ['IF', 'ID', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'MEM', 'WB']
+
     def __init__(self, data, fileName=True):
         
-        data_stages = ['IF', 'ID', 'EXE', 'MEM', 'WB']
-        add_stages  = ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB']
-        mult_stages = ['IF', 'ID', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'MEM', 'WB']
-
         self.data_dep = []
+        self.timing = ""
 
         #Initialize all integer registers to zero
         self.IRegs = {}
@@ -30,7 +31,7 @@ class Pipeline:
         #Initialize all memory locations to zero
         self.Mem = {}
         for mem_num in range(0, 992, 8):
-            key = "%s" % mem_num
+            key = mem_num
             self.Mem[key] = 0
 
         #Read file into file_contents
@@ -45,6 +46,9 @@ class Pipeline:
         self.populate_fp_regs()
         self.populate_mem()
         self.populate_code()
+        self.populate_instr_types()
+
+        self.num_instructions = len(self.Code)
 
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
@@ -62,18 +66,28 @@ class Pipeline:
         mem_regex = re.compile(r'(\d{1,3})\s*((?:\d+\.\d+)|(?:\d+)|(?:\.\d+))\s*')
         list_of_matches = mem_regex.findall(self.file_contents)
         for tup in list_of_matches:
-            self.Mem[tup[0]] = float(tup[1])
+            self.Mem[int(tup[0])] = float(tup[1])
 
     def populate_code(self):
+        self.Code = {}
         code_regex = re.compile(r'(L\.D|S\.D|ADD\.D|SUB\.D|MUL\.D)\s+([^\s,]+),\s+([^\s,]+),?(?:\s*([^\sLSAM]+))?\s*')
-        self.Code = code_regex.findall(self.file_contents)
-        
+        instr_list = code_regex.findall(self.file_contents)
+        for i in range(1, len(instr_list) + 1):
+            self.Code[i] = instr_list[i - 1]
+    
+    def populate_instr_types(self):
+        self.instr_types = {}
+        types = {'ADD.D': 'add', 'SUB.D': 'sub', 'L.D': 'load', 'S.D': 'store', 'MUL.D': 'mult'}
+        for i in range(1, len(self.Code) + 1):
+            self.instr_types[i] = types[self.Code[i][0]]
+
     def get_data_dependencies(self):
-        for i in range(1, len(self.Code)):
-            for j in range(0, i):
+        for i in range(2, len(self.Code) + 1):
+            for j in range(1, i):
                 if self.Code[i][2] == self.Code[j][1] or self.Code[i][3] == self.Code[j][1]:
                     self.data_dep.append((i, j))
-        
+       
+
     #def execute_instructions(self):
 
 
