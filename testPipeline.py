@@ -65,9 +65,9 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(pipeline.instr_types[4], 'store')
         self.assertEqual(pipeline.instr_types[5], 'mult')
 
-    def testGetDataDependencies(self):
+    def testGetAllDataDependencies(self):
         pipeline = Pipeline('project-input.0.txt')
-        pipeline.get_data_dependencies()
+        pipeline.get_all_data_dependencies()
         self.assertEqual(pipeline.data_dep[0], (3,1))
         self.assertEqual(pipeline.data_dep[1], (3,2))
         self.assertEqual(pipeline.data_dep[2], (4,3))
@@ -79,6 +79,12 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(pipeline.data_dep[8], (8,1))
         self.assertEqual(pipeline.data_dep[9], (8,2))
         self.assertEqual(pipeline.data_dep[10], (8,6))
+
+    def testGetInstrDataDependencies(self):
+        pipeline = Pipeline("L.D F1, 0(R2)\nADD.D F1, F2, F3\nMUL.D F3, F1, F2\n", False)
+        pipeline2 = Pipeline("L.D F6, 0(R2)\nADD.D F1, F2, F3", False)
+        self.assertEqual(pipeline.get_instr_data_dependencies(3), [1, 2])
+        self.assertEqual(pipeline2.get_instr_data_dependencies(2), [])
 
 if __name__ == '__main__':
     unittest.main()

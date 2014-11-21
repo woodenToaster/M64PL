@@ -4,17 +4,49 @@
 # 12/1/2014
 
 import re
+import pprint
 
 class Pipeline:
 
-    data_stages = ['IF', 'ID', 'EXE', 'MEM', 'WB']
-    add_stages  = ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB']
-    mult_stages = ['IF', 'ID', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'MEM', 'WB']
+    data_stages = {
+        1: 'IF',
+        2: 'ID',
+        3: 'EXE',
+        4: 'MEM',
+        5: 'WB'
+    }
+
+    add_stages  = {
+        1: 'IF',
+        2: 'ID',
+        3: 'A1',
+        4: 'A2',
+        5: 'A3',
+        6: 'A4',
+        7: 'MEM',
+        8: 'WB'
+    }
+
+    mult_stages = {
+        1: 'IF',
+        2: 'ID',
+        3: 'M1',
+        4: 'M2',
+        5: 'M3',
+        6: 'M4',
+        7: 'M5',
+        8: 'M6',
+        9: 'M7',
+        10: 'MEM',
+        11: 'WB'
+    }
 
     def __init__(self, data, fileName=True):
         
         self.data_dep = []
         self.timing = ""
+        self.instructions = {}
+
 
         #Initialize all integer registers to zero
         self.IRegs = {}
@@ -47,8 +79,9 @@ class Pipeline:
         self.populate_mem()
         self.populate_code()
         self.populate_instr_types()
-
         self.num_instructions = len(self.Code)
+        self.get_all_data_dependencies()
+        self.create_instructions()
 
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
@@ -81,15 +114,35 @@ class Pipeline:
         for i in range(1, len(self.Code) + 1):
             self.instr_types[i] = types[self.Code[i][0]]
 
-    def get_data_dependencies(self):
+    def get_all_data_dependencies(self):
         for i in range(2, len(self.Code) + 1):
             for j in range(1, i):
                 if self.Code[i][2] == self.Code[j][1] or self.Code[i][3] == self.Code[j][1]:
                     self.data_dep.append((i, j))
        
+    def get_instr_data_dependencies(self, instr):
+        deps = []
+        for dep in self.data_dep:
+            if dep[0] == instr:
+                deps.append(dep[1])
+        return deps
+
+    def create_instructions(self):
+
+        for i in range(1, self.num_instructions + 1):
+            self.instructions[i] = {
+                'instr': self.Code[i][0],
+                'op1': self.Code[i][1],
+                'op2': self.Code[i][2],
+                'op3': self.Code[i][3],
+                'stages': '',#assign later
+                'd_dep': self.get_instr_data_dependencies(i)
+            }
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(self.instructions)
 
     #def execute_instructions(self):
-
+        #for each instruction
 
     #def add_stalls(num_stalls, list):
         #for i in range(num_stalls):
