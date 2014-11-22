@@ -86,6 +86,32 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(pipeline.get_instr_data_dependencies(3), [1, 2])
         self.assertEqual(pipeline2.get_instr_data_dependencies(2), [])
 
+    def testGetStages(self):
+        pipeline = Pipeline("L.D F1, 0(R2)\nADD.D F2, F3, F4\nMUL.D F2, F3, F4\n", False)
+        self.assertEqual(pipeline.get_stages(pipeline.Code[1][0]), Pipeline.data_stages)
+        self.assertEqual(pipeline.get_stages(pipeline.Code[2][0]), Pipeline.add_stages)
+        self.assertEqual(pipeline.get_stages(pipeline.Code[3][0]), Pipeline.mult_stages)
+
+    def testCreateInstructions(self):
+        pipeline = Pipeline("L.D F0, 0(R2)\n", False)
+        expected = {
+            'instr': 'L.D',
+            'op1': 'F0',
+            'op2': '0(R2)',
+            'op3': '',
+            'stages': Pipeline.data_stages,
+            'current_stage': 0,
+            'stalls': 0,
+            'd_dep': [],
+            'instr_seq': []
+        }
+        self.assertEqual(pipeline.instructions[1], expected)
+
+    def testAddStalls(self):
+        pipeline = Pipeline('', False)
+        expected = pipeline.add_stalls(3, ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
+        self.assertEqual(expected, ['IF', 's', 's', 's', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -46,7 +46,7 @@ class Pipeline:
         self.data_dep = []
         self.timing = ""
         self.instructions = {}
-
+        self.cc = 1
 
         #Initialize all integer registers to zero
         self.IRegs = {}
@@ -135,16 +135,48 @@ class Pipeline:
                 'op1': self.Code[i][1],
                 'op2': self.Code[i][2],
                 'op3': self.Code[i][3],
-                'stages': '',#assign later
-                'd_dep': self.get_instr_data_dependencies(i)
+                'stages': self.get_stages(self.Code[i][0]),
+                'current_stage': 0,
+                'stalls': 0,
+                'd_dep': self.get_instr_data_dependencies(i),
+                'instr_seq': []
             }
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.instructions)
+
+    def get_stages(self, instr):
+        if instr == 'L.D' or instr == 'S.D':
+            return Pipeline.data_stages
+        elif instr == 'ADD.D' or instr == 'SUB.D':
+            return Pipeline.add_stages
+        elif instr == 'MUL.D':
+            return Pipeline.mult_stages
+        else:
+            print("Error: Invalid instruction")
+
+    def add_stalls(self, num_stalls, stages):
+        for i in range(num_stalls):
+            stages[1:1] = ['s']
+        return stages
+   
+    def print_timing(self):
+        print("      ", end="")
+        for i in range(1, self.num_instructions + 1):
+            print("I#%d" % i, end="   ")
+        print("")
+        for cc in range(1, self.cc + 1):
+            print("c#%d" % cc, end="")
+            for instr in range(1, self.num_instructions + 1):
+                print("%s" % self.instructions[instr]['instr_seq'][cc - 1], end="   ")
+            print("")
+        print("")
 
     #def execute_instructions(self):
         #for each instruction
+            #see if it can go to the next stage
+                #cur = 0: Can always go to IF => 1
+                #cur = 1: IF.  Can go to 2(ID) if this instr has no data dependencies => 2
+                #cur = 2: ID.  Can always start execution in next cc => 3
+                #cur = 3-9: EXE.  Depends on instruction type. => MEM
+                #cur = MEM: Must check waw dependencies and can't write twice in same cc
+                #           unless one is a memory write and one is a register write
 
-    #def add_stalls(num_stalls, list):
-        #for i in range(num_stalls):
-            #list[1:1] = ['s']
-        #return list
+    
