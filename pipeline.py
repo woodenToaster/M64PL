@@ -128,21 +128,6 @@ class Pipeline:
                 deps.append(dep[1])
         return deps
 
-    def create_instructions(self):
-
-        for i in range(1, self.num_instructions + 1):
-            self.instructions[i] = {
-                'instr': self.Code[i][0],
-                'op1': self.Code[i][1],
-                'op2': self.Code[i][2],
-                'op3': self.Code[i][3],
-                'stages': self.get_stages(self.Code[i][0]),
-                'current_stage': 0,
-                'stalls': 0,
-                'd_dep': self.get_instr_data_dependencies(i),
-                'instr_seq': []
-            }
-
     def get_stages(self, instr):
         if instr == 'L.D' or instr == 'S.D':
             return Pipeline.data_stages
@@ -175,15 +160,58 @@ class Pipeline:
         for reg in range(0, 32):
             key = "F%d" % reg
             if self.FPRegs[key] != 0:
-                print(key, end="    ")
+                print(key, end="           ")
                 values += "%f    " % self.FPRegs[key]
         print("")
         print(values)
 
+    def can_proceed(self, instr):
+        pass
 
-    #def execute_instructions(self):
-        #for each instruction
-            #see if it can go to the next stage
+    def create_instructions(self):
+        for i in range(1, self.num_instructions + 1):
+            self.instructions[i] = {
+                'instr': self.Code[i][0],
+                'op1': self.Code[i][1],
+                'op2': self.Code[i][2],
+                'op3': self.Code[i][3],
+                'stages': self.get_stages(self.Code[i][0]),
+                'current_stage': 0,
+                'stalls': 0,
+                'active': False,
+                'd_dep': self.get_instr_data_dependencies(i),
+                'instr_seq': []
+            }
+
+    def advance_instr(self, num):
+        self.instructions[num]['current_stage'] += 1
+        stage = self.instructions[num]['current_stage']
+        self.instructions[num]['instr_seq'].append(self.instructions[num]['stages'][stage])
+
+    def final_stage(self, num):
+        last = len(self.instructions[num]['stages'])
+        if self.instructions[num]['current_stage'] == last:
+            return True
+        else:
+            return False
+
+    def execute_instructions(self):
+        self.instructions[1]['instr_seq'].extend(self.instructions[1]['stages'].values())
+        while(True):
+            for i in range(2, len(self.instructions) + 1):
+                
+                if self.instructions[i]['active'] == True:
+                    self.advance_instr(i)
+                if self.instructions[i -1]['instr_seq'][i] == 'ID':
+                    self.instructons[i]['current_stage'] = 1
+                    self.instructions[i]['active'] = True
+                    self.instructions[i]['instr_seq'].append('IF')
+                
+            if i == (len(self.instructions) + 1) and self.final_stage(i):
+                break
+            self.cc += 1  
+
+            #if self.can_proceed(instr):
                 #cur = 0: Can always go to IF => 1
                 #cur = 1: IF.  Can go to 2(ID) if this instr has no data dependencies => 2
                 #cur = 2: ID.  Can always start execution in next cc => 3

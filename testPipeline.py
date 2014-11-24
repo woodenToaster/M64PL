@@ -104,6 +104,7 @@ class TestPipeline(unittest.TestCase):
             'stages': Pipeline.data_stages,
             'current_stage': 0,
             'stalls': 0,
+            'active': False,
             'd_dep': [],
             'instr_seq': []
         }
@@ -114,21 +115,33 @@ class TestPipeline(unittest.TestCase):
         expected = pipeline.add_stalls(3, ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
         self.assertEqual(expected, ['IF', 's', 's', 's', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
 
-    #def testPrintRegisters(self):
-    #    pipeline = Pipeline('', False)
-    #    pipeline.FPRegs['F25'] = 15
-    #    pipeline.FPRegs['F2'] = 15.89
-    #    pipeline.FPRegs['F7'] = 78.56
-    #    sys.stdout = open('test.1', 'w')
-    #    pipeline.print_registers()
-    #    sys.stdout.close()
-    #    reg_file = open('test.1').read()
-    #    self.assertEqual(reg_file, "F2    F7    F25    \n")
-                                               
-    #    try:
-    #        os.remove('test.1')
-    #    except OSError:
-    #        pass
+    def testPrintRegisters(self):
+        pipeline = Pipeline('', False)
+        pipeline.FPRegs['F25'] = 15
+        pipeline.FPRegs['F2'] = 15.89
+        pipeline.FPRegs['F7'] = 78.56
+        sys.stdout = open('test.1', 'w')
+        pipeline.print_registers()
+        sys.stdout.close()
+        reg_file = open('test.1')
+        file_contents = reg_file.read()
+        self.assertEqual(file_contents, "F2           F7           F25           \n15.890000    78.560000    15.000000    \n")
+        reg_file.close()                              
+        try:
+            os.remove('test.1')
+        except OSError:
+            pass
+
+    def testAddInitialStages(self):
+        pipeline = Pipeline('project-input.0.txt')
+        pipeline.instructions[1]['instr_seq'].extend(pipeline.instructions[1]['stages'].values())
+        self.assertEqual(pipeline.instructions[1]['instr_seq'], ['IF', 'ID', 'EXE', 'MEM', 'WB'])
+
+    def testFinalStage(self):
+        pipeline = Pipeline('project-input.0.txt')
+        self.assertFalse(pipeline.final_stage(1))
+        pipeline.instructions[8]['current_stage'] = 8
+        self.assertTrue(pipeline.final_stage(8))
 
 if __name__ == '__main__':
     unittest.main()
