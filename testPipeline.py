@@ -1,5 +1,7 @@
 import cutest as unittest
 import re
+import sys
+import os
 from pipeline import Pipeline
 
 class TestPipeline(unittest.TestCase):
@@ -111,6 +113,22 @@ class TestPipeline(unittest.TestCase):
         pipeline = Pipeline('', False)
         expected = pipeline.add_stalls(3, ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
         self.assertEqual(expected, ['IF', 's', 's', 's', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
+
+    #def testPrintRegisters(self):
+    #    pipeline = Pipeline('', False)
+    #    pipeline.FPRegs['F25'] = 15
+    #    pipeline.FPRegs['F2'] = 15.89
+    #    pipeline.FPRegs['F7'] = 78.56
+    #    sys.stdout = open('test.1', 'w')
+    #    pipeline.print_registers()
+    #    sys.stdout.close()
+    #    reg_file = open('test.1').read()
+    #    self.assertEqual(reg_file, "F2    F7    F25    \n")
+                                               
+    #    try:
+    #        os.remove('test.1')
+    #    except OSError:
+    #        pass
 
 if __name__ == '__main__':
     unittest.main()

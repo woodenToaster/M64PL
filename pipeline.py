@@ -83,6 +83,7 @@ class Pipeline:
         self.get_all_data_dependencies()
         self.create_instructions()
 
+
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
         list_of_matches = int_regex.findall(self.file_contents)
@@ -168,6 +169,17 @@ class Pipeline:
                 print("%s" % self.instructions[instr]['instr_seq'][cc - 1], end="   ")
             print("")
         print("")
+
+    def print_registers(self):
+        values = ""
+        for reg in range(0, 32):
+            key = "F%d" % reg
+            if self.FPRegs[key] != 0:
+                print(key, end="    ")
+                values += "%f    " % self.FPRegs[key]
+        print("")
+        print(values)
+
 
     #def execute_instructions(self):
         #for each instruction
