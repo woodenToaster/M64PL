@@ -5,6 +5,7 @@
 
 import re
 import pprint
+import pdb
 
 class Pipeline:
 
@@ -82,7 +83,7 @@ class Pipeline:
         self.num_instructions = len(self.Code)
         self.get_all_data_dependencies()
         self.create_instructions()
-
+        self.execute_instructions()
 
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
@@ -146,12 +147,12 @@ class Pipeline:
     def print_timing(self):
         print("      ", end="")
         for i in range(1, self.num_instructions + 1):
-            print("I#%d" % i, end="   ")
+            print("I#%d" % i, end="    ")
         print("")
         for cc in range(1, self.cc + 1):
-            print("c#%d" % cc, end="")
+            print("c#%d" % cc, end="%-3s" % "")
             for instr in range(1, self.num_instructions + 1):
-                print("%s" % self.instructions[instr]['instr_seq'][cc - 1], end="   ")
+                print("%-7s" % self.instructions[instr]['instr_seq'][cc - 1], end="")
             print("")
         print("")
 
@@ -165,8 +166,22 @@ class Pipeline:
         print("")
         print(values)
 
-    def can_proceed(self, instr):
-        pass
+    def can_proceed(self, num):
+        return True
+
+
+    def advance_instr(self, num):
+        self.instructions[num]['current_stage'] += 1
+        stage = self.instructions[num]['current_stage']
+        if stage > len(self.instructions[num]['stages']):
+            self.instructions[num]['active'] = False
+            self.instructions[num]['instr_seq'].append('')
+        else:
+            self.instructions[num]['instr_seq'].append(self.instructions[num]['stages'][stage])
+
+    def can_fetch(self, num):
+        return self.instructions[num-1]['instr_seq'][self.cc-1] == 'ID'
+
 
     def create_instructions(self):
         for i in range(1, self.num_instructions + 1):
@@ -183,33 +198,42 @@ class Pipeline:
                 'instr_seq': []
             }
 
-    def advance_instr(self, num):
-        self.instructions[num]['current_stage'] += 1
-        stage = self.instructions[num]['current_stage']
-        self.instructions[num]['instr_seq'].append(self.instructions[num]['stages'][stage])
-
-    def final_stage(self, num):
-        last = len(self.instructions[num]['stages'])
-        if self.instructions[num]['current_stage'] == last:
-            return True
-        else:
-            return False
+    
+    def finished(self):
+        fin = True
+        for i in range(1, len(self.instructions) + 1):
+            if 'WB' not in self.instructions[i]['instr_seq']:
+                fin = False
+        return fin
 
     def execute_instructions(self):
-        self.instructions[1]['instr_seq'].extend(self.instructions[1]['stages'].values())
         while(True):
-            for i in range(2, len(self.instructions) + 1):
-                
-                if self.instructions[i]['active'] == True:
-                    self.advance_instr(i)
-                if self.instructions[i -1]['instr_seq'][i] == 'ID':
-                    self.instructons[i]['current_stage'] = 1
-                    self.instructions[i]['active'] = True
-                    self.instructions[i]['instr_seq'].append('IF')
-                
-            if i == (len(self.instructions) + 1) and self.final_stage(i):
+            for i in range(1, len(self.instructions) + 1):
+                if self.instructions[i]['active'] == False:
+                    if i == 1:
+                        if len(self.instructions[i]['instr_seq']) == 0:
+                            self.instructions[i]['instr_seq'].append('IF')
+                            self.instructions[i]['active'] = True
+                            self.instructions[i]['current_stage'] += 1
+                        else:
+                            
+                            self.advance_instr(i)
+                    else:    
+                        if self.can_fetch(i):
+                            self.instructions[i]['active'] = True
+                            self.instructions[i]['current_stage'] += 1
+                            self.instructions[i]['instr_seq'].append('IF')
+                        else:
+                            self.instructions[i]['instr_seq'].append('')
+                else:
+                    if self.can_proceed(i):
+                        self.advance_instr(i)
+                    else:
+                        self.instructions[i]['instr_seq'].append('')
+               
+            if self.finished():
                 break
-            self.cc += 1  
+            self.cc += 1
 
             #if self.can_proceed(instr):
                 #cur = 0: Can always go to IF => 1
