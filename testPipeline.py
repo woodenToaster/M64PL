@@ -137,12 +137,6 @@ class TestPipeline(unittest.TestCase):
         pipeline.instructions[1]['instr_seq'].extend(pipeline.instructions[1]['stages'].values())
         self.assertEqual(pipeline.instructions[1]['instr_seq'], ['IF', 'ID', 'EXE', 'MEM', 'WB'])
 
-    def testFinalStage(self):
-        pipeline = Pipeline('project-input.0.txt')
-        self.assertFalse(pipeline.final_stage(1))
-        pipeline.instructions[8]['current_stage'] = 8
-        self.assertTrue(pipeline.final_stage(8))
-
 if __name__ == '__main__':
     unittest.main()
 

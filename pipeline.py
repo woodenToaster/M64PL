@@ -83,7 +83,7 @@ class Pipeline:
         self.num_instructions = len(self.Code)
         self.get_all_data_dependencies()
         self.create_instructions()
-        self.execute_instructions()
+        #self.execute_instructions()
 
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
@@ -147,12 +147,12 @@ class Pipeline:
     def print_timing(self):
         print("      ", end="")
         for i in range(1, self.num_instructions + 1):
-            print("I#%d" % i, end="    ")
+            print("I#%d" % i, end="%-3s" % "")
         print("")
         for cc in range(1, self.cc + 1):
-            print("c#%d" % cc, end="%-3s" % "")
+            print("c#%-4s" % cc, end="")
             for instr in range(1, self.num_instructions + 1):
-                print("%-7s" % self.instructions[instr]['instr_seq'][cc - 1], end="")
+                print("%-6s" % self.instructions[instr]['instr_seq'][cc - 1], end="")
             print("")
         print("")
 
@@ -169,7 +169,6 @@ class Pipeline:
     def can_proceed(self, num):
         return True
 
-
     def advance_instr(self, num):
         self.instructions[num]['current_stage'] += 1
         stage = self.instructions[num]['current_stage']
@@ -181,7 +180,6 @@ class Pipeline:
 
     def can_fetch(self, num):
         return self.instructions[num-1]['instr_seq'][self.cc-1] == 'ID'
-
 
     def create_instructions(self):
         for i in range(1, self.num_instructions + 1):
@@ -198,7 +196,6 @@ class Pipeline:
                 'instr_seq': []
             }
 
-    
     def finished(self):
         fin = True
         for i in range(1, len(self.instructions) + 1):
