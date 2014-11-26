@@ -42,6 +42,8 @@ class Pipeline:
         11: 'WB'
     }
 
+    
+
     def __init__(self, data, fileName=True):
         
         self.data_dep = []
@@ -167,6 +169,7 @@ class Pipeline:
         print(values)
 
     def can_proceed(self, num):
+        
         return True
 
     def advance_instr(self, num):
@@ -203,7 +206,34 @@ class Pipeline:
                 fin = False
         return fin
 
+    def add_instr(self, num):
+        pass
+
+    def sub_instr(self, num):
+        pass
+
+    def ld_instr(self, num):
+        pass
+
+    def st_instr(self, num):
+        pass
+
+    def mult_instr(self, num):
+        pass
+
+    op_dict = {
+        'add': add_instr,
+        'sub': sub_instr,
+        'load': ld_instr,
+        'store': st_instr,
+        'mult': mult_instr
+    }
+
+    def perform_operation(self, num):
+        Pipeline.op_dict[self.instr_types[num]](self, num)
+
     def execute_instructions(self):
+        
         while(True):
             for i in range(1, len(self.instructions) + 1):
                 if self.instructions[i]['active'] == False:
@@ -213,7 +243,6 @@ class Pipeline:
                             self.instructions[i]['active'] = True
                             self.instructions[i]['current_stage'] += 1
                         else:
-                            
                             self.advance_instr(i)
                     else:    
                         if self.can_fetch(i):
@@ -224,20 +253,25 @@ class Pipeline:
                             self.instructions[i]['instr_seq'].append('')
                 else:
                     if self.can_proceed(i):
+                        pdb.set_trace()
                         self.advance_instr(i)
                     else:
-                        self.instructions[i]['instr_seq'].append('')
-               
+                        self.instructions[i]['stalls'] += 1
+                self.perform_operation(i)
+
             if self.finished():
                 break
             self.cc += 1
 
-            #if self.can_proceed(instr):
-                #cur = 0: Can always go to IF => 1
-                #cur = 1: IF.  Can go to 2(ID) if this instr has no data dependencies => 2
-                #cur = 2: ID.  Can always start execution in next cc => 3
-                #cur = 3-9: EXE.  Depends on instruction type. => MEM
-                #cur = MEM: Must check waw dependencies and can't write twice in same cc
-                #           unless one is a memory write and one is a register write
+        for i in range(1, len(self.instructions) + 1):
+            self.add_stalls(self.instructions[i]['stalls'], self.instructions[i]['stages'])
+
+        #if self.can_proceed(instr):
+            #cur = 0: Can always go to IF => 1
+            #cur = 1: IF.  Can go to 2(ID) if this instr has no data dependencies => 2
+            #cur = 2: ID.  Can always start execution in next cc => 3
+            #cur = 3-9: EXE.  Depends on instruction type. => MEM
+            #cur = MEM: Must check waw dependencies and can't write twice in same cc
+            #           unless one is a memory write and one is a register write
 
     
