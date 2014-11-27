@@ -5,5 +5,5 @@ main: pipeline.py main.py
 	python3 main.py
 	
 test: testPipeline.py pipeline.py
-	python3 cutest.py testPipeline.py -v
+	python3 cutest.py -v testPipeline.py
 

@@ -207,19 +207,57 @@ class Pipeline:
         return fin
 
     def add_instr(self, num):
-        pass
+        dest = self.instructions[num]['op1']
+        op1 = self.instructions[num]['op2']
+        op2 = self.instructions[num]['op3']
+        if dest[0] == 'F':
+            self.FPRegs[dest] = self.FPRegs[op1] + self.FPRegs[op2]
+        else:
+            self.IRegs[dest] = self.IRegs[op1] + self.IRegs[op2]
 
     def sub_instr(self, num):
-        pass
+        dest = self.instructions[num]['op1']
+        op1 = self.instructions[num]['op2']
+        op2 = self.instructions[num]['op3']
+        if dest[0] == 'F':
+            self.FPRegs[dest] = self.FPRegs[op1] - self.FPRegs[op2]
+        else:
+            self.IRegs[dest] = self.IRegs[op1] - self.IRegs[op2]
 
     def ld_instr(self, num):
-        pass
+        dest = self.instructions[num]['op1']
+        location = self.instructions[num]['op2']
+        offsetRegex = re.compile(r'(\d+)\(')
+        regRegex = re.compile(r'\((.+)\)')
+        offset = int(offsetRegex.match(location).group(1))
+        register = regRegex.search(location).group(1)
+        memLocation = offset + self.IRegs[register]
+        if dest[0] == 'F':
+            self.FPRegs[dest] = self.Mem[memLocation]
+        else:
+            self.IRegs[dest] = self.Mem[memLocation]
 
     def st_instr(self, num):
-        pass
+        dest = self.instructions[num]['op1']
+        location = self.instructions[num]['op2']
+        offsetRegex = re.compile(r'(\d+)\(')
+        regRegex = re.compile(r'\((.+)\)')
+        offset = int(offsetRegex.match(dest).group(1))
+        register = regRegex.search(dest).group(1)
+        memLocation = offset + self.IRegs[register]
+        if location[0] == 'F':
+            self.Mem[memLocation] = self.FPRegs[location]
+        else:
+            self.Mem[memLocation] = self.IRegs[location]
 
     def mult_instr(self, num):
-        pass
+        dest = self.instructions[num]['op1']
+        op1 = self.instructions[num]['op2']
+        op2 = self.instructions[num]['op3']
+        if dest[0] == 'F':
+            self.FPRegs[dest] = self.FPRegs[op1] * self.FPRegs[op2]
+        else:
+            self.IRegs[dest] = self.IRegs[op1] * self.IRegs[op2]
 
     op_dict = {
         'add': add_instr,
@@ -253,11 +291,11 @@ class Pipeline:
                             self.instructions[i]['instr_seq'].append('')
                 else:
                     if self.can_proceed(i):
-                        pdb.set_trace()
+                        #pdb.set_trace()
                         self.advance_instr(i)
+                        self.perform_operation(i)
                     else:
                         self.instructions[i]['stalls'] += 1
-                self.perform_operation(i)
 
             if self.finished():
                 break

@@ -137,6 +137,74 @@ class TestPipeline(unittest.TestCase):
         pipeline.instructions[1]['instr_seq'].extend(pipeline.instructions[1]['stages'].values())
         self.assertEqual(pipeline.instructions[1]['instr_seq'], ['IF', 'ID', 'EXE', 'MEM', 'WB'])
 
+    def testAddInstr(self):
+        pipeline = Pipeline('ADD.D F1, F2, F3', False)
+        pipeline.FPRegs['F2'] = 2
+        pipeline.FPRegs['F3'] = 2
+        pipeline.add_instr(1)
+        self.assertEqual(pipeline.FPRegs['F1'], 4)
+
+    def testAddWithIRegs(self):
+        pipeline = Pipeline('ADD.D R1, R2, R3', False)
+        pipeline.IRegs['R2'] = 2
+        pipeline.IRegs['R3'] = 2
+        pipeline.add_instr(1)
+        self.assertEqual(pipeline.IRegs['R1'], 4)
+
+    def testSubInstr(self):
+        pipeline = Pipeline('ADD.D F1, F2, F3', False)
+        pipeline.FPRegs['F2'] = 2
+        pipeline.FPRegs['F3'] = 2
+        pipeline.sub_instr(1)
+        self.assertEqual(pipeline.FPRegs['F1'], 0)
+
+    def testMultInstr(self):
+        pipeline = Pipeline('ADD.D F1, F2, F3', False)
+        pipeline.FPRegs['F2'] = 2
+        pipeline.FPRegs['F3'] = 3
+        pipeline.mult_instr(1)
+        self.assertEqual(pipeline.FPRegs['F1'], 6)
+
+    def testOffsetRegex(self):
+        osRegex = re.compile(r'(\d+)\(')
+        res = int(osRegex.match('16(R2)').group(1))
+        self.assertEqual(res, 16)
+        res = int(osRegex.match('0(R2)').group(1))
+        self.assertEqual(res, 0)
+
+    def testRegisterRegex(self):
+        regRegex = re.compile(r'\((.+)\)')
+        res = regRegex.search('16(R21)')
+        self.assertEqual(res.group(1), 'R21')
+
+    def testLoadInstr(self):
+        pipeline = Pipeline('L.D F1, 16(R1)', False)
+        pipeline.IRegs['R1'] = 8
+        pipeline.Mem[24] = 5
+        pipeline.ld_instr(1)
+        self.assertEqual(pipeline.FPRegs['F1'], 5)
+
+    def testLoadInstrIRegs(self):
+        pipeline = Pipeline('L.D R2, 16(R1)', False)
+        pipeline.IRegs['R1'] = 8
+        pipeline.Mem[24] = 5
+        pipeline.ld_instr(1)
+        self.assertEqual(pipeline.IRegs['R2'], 5)
+
+    def testStInstr(self):
+        pipeline = Pipeline('S.D 16(R1), F1', False)
+        pipeline.IRegs['R1'] = 16
+        pipeline.FPRegs['F1'] = 5
+        pipeline.st_instr(1)
+        self.assertEqual(pipeline.Mem[32], 5)
+
+    def testStInstrIRegs(self):
+        pipeline = Pipeline('S.D 16(R1), R2', False)
+        pipeline.IRegs['R1'] = 16
+        pipeline.IRegs['R2'] = 5
+        pipeline.st_instr(1)
+        self.assertEqual(pipeline.Mem[32], 5)
+
 if __name__ == '__main__':
     unittest.main()
 
