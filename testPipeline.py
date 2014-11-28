@@ -103,6 +103,7 @@ class TestPipeline(unittest.TestCase):
             'op3': '',
             'stages': Pipeline.data_stages,
             'current_stage': 0,
+            'executed': False,
             'stalls': 0,
             'active': False,
             'd_dep': [],

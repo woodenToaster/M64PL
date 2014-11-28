@@ -85,7 +85,6 @@ class Pipeline:
         self.num_instructions = len(self.Code)
         self.get_all_data_dependencies()
         self.create_instructions()
-        #self.execute_instructions()
 
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
@@ -163,13 +162,15 @@ class Pipeline:
         for reg in range(0, 32):
             key = "F%d" % reg
             if self.FPRegs[key] != 0:
-                print(key, end="           ")
-                values += "%f    " % self.FPRegs[key]
+                print("%-10s" % key, end="")
         print("")
-        print(values)
+        for reg in range(0, 32):
+            key = "F%d" % reg
+            if self.FPRegs[key] != 0:
+                print("%-10s" % str(self.FPRegs[key]).rstrip('0').rstrip('.'), end="")
+        print("")
 
     def can_proceed(self, num):
-        
         return True
 
     def advance_instr(self, num):
@@ -193,6 +194,7 @@ class Pipeline:
                 'op3': self.Code[i][3],
                 'stages': self.get_stages(self.Code[i][0]),
                 'current_stage': 0,
+                'executed': False,
                 'stalls': 0,
                 'active': False,
                 'd_dep': self.get_instr_data_dependencies(i),
@@ -227,7 +229,7 @@ class Pipeline:
     def ld_instr(self, num):
         dest = self.instructions[num]['op1']
         location = self.instructions[num]['op2']
-        offsetRegex = re.compile(r'(\d+)\(')
+        offsetRegex = re.compile(r'(-?\d+)\(')
         regRegex = re.compile(r'\((.+)\)')
         offset = int(offsetRegex.match(location).group(1))
         register = regRegex.search(location).group(1)
@@ -240,7 +242,7 @@ class Pipeline:
     def st_instr(self, num):
         dest = self.instructions[num]['op1']
         location = self.instructions[num]['op2']
-        offsetRegex = re.compile(r'(\d+)\(')
+        offsetRegex = re.compile(r'(-?\d+)\(')
         regRegex = re.compile(r'\((.+)\)')
         offset = int(offsetRegex.match(dest).group(1))
         register = regRegex.search(dest).group(1)
@@ -269,6 +271,20 @@ class Pipeline:
 
     def perform_operation(self, num):
         Pipeline.op_dict[self.instr_types[num]](self, num)
+        self.instructions[num]['executed'] == True
+
+    def done_executing(self, num):
+        stages = self.instructions[num]['stages']
+        current_stage = self.instructions[num]['current_stage']
+
+        if stages == Pipeline.data_stages and current_stage == 3:
+            return True
+        if stages == Pipeline.add_stages and current_stage == 6:
+            return True
+        if stages == Pipeline.mult_stages and current_stage == 9:
+            return True
+        
+        return False
 
     def execute_instructions(self):
         
@@ -291,9 +307,9 @@ class Pipeline:
                             self.instructions[i]['instr_seq'].append('')
                 else:
                     if self.can_proceed(i):
-                        #pdb.set_trace()
+                        if self.done_executing(i) and self.instructions[i]['executed'] == False:
+                            self.perform_operation(i)
                         self.advance_instr(i)
-                        self.perform_operation(i)
                     else:
                         self.instructions[i]['stalls'] += 1
 
