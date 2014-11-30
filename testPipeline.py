@@ -2,6 +2,7 @@ import cutest as unittest
 import re
 import sys
 import os
+import pdb
 from pipeline import Pipeline
 
 class TestPipeline(unittest.TestCase):
@@ -107,6 +108,7 @@ class TestPipeline(unittest.TestCase):
             'stalls': 0,
             'active': False,
             'd_dep': [],
+            'w_dep': [],
             'instr_seq': []
         }
         self.assertEqual(pipeline.instructions[1], expected)
@@ -126,7 +128,7 @@ class TestPipeline(unittest.TestCase):
         sys.stdout.close()
         reg_file = open('test.1')
         file_contents = reg_file.read()
-        self.assertEqual(file_contents, "F2           F7           F25           \n15.890000    78.560000    15.000000    \n")
+        self.assertEqual(file_contents, "F2        F7        F25       \n15.89     78.56     15        \n")
         reg_file.close()                              
         try:
             os.remove('test.1')
@@ -205,6 +207,11 @@ class TestPipeline(unittest.TestCase):
         pipeline.IRegs['R2'] = 5
         pipeline.st_instr(1)
         self.assertEqual(pipeline.Mem[32], 5)
+
+    def testGetAllWriteDependencies(self):
+        pipeline = Pipeline('project-input.0.txt')
+        self.assertEqual(pipeline.instructions[5]['w_dep'], [3])
+        self.assertEqual(pipeline.instructions[6]['w_dep'], [1])
 
 if __name__ == '__main__':
     unittest.main()

@@ -44,6 +44,7 @@ class Pipeline:
     def __init__(self, data, fileName=True):
         
         self.data_dep = []
+        self.write_dep = []
         self.timing = ""
         self.instructions = {}
         self.cc = 1
@@ -82,6 +83,7 @@ class Pipeline:
         self.num_instructions = len(self.Code)
         self.get_all_data_dependencies()
         self.create_instructions()
+        self.get_all_write_dependencies()
 
     def populate_i_regs(self):
         int_regex = re.compile(r'(R(?:0|[1-9]|[12][0-9]|3[01]))\s+(\d+)\s*')
@@ -127,6 +129,13 @@ class Pipeline:
                 deps.append(dep[1])
         return deps
 
+    def get_all_write_dependencies(self):
+        for i in range(2, len(self.instructions) + 1):
+            for j in range(1, i):
+                if self.instructions[i]['op1'] == self.instructions[j]['op1']:
+                    self.instructions[i]['w_dep'].append(j)
+
+
     def get_stages(self, instr):
         if instr == 'L.D' or instr == 'S.D':
             return Pipeline.data_stages
@@ -169,7 +178,8 @@ class Pipeline:
 
     def can_proceed(self, num):
         data_deps = self.instructions[num]['d_dep']
-        if not data_deps:
+        #write_deps = self.instuctions[num]['w_dep']
+        if not data_deps: # and not write_deps:
             return True
         return False
 
@@ -198,6 +208,7 @@ class Pipeline:
                 'stalls': 0,
                 'active': False,
                 'd_dep': self.get_instr_data_dependencies(i),
+                'w_dep': [],
                 'instr_seq': []
             }
 
@@ -293,7 +304,6 @@ class Pipeline:
         return False
 
     def execute_instructions(self):
-        
         while(True):
             for i in range(1, len(self.instructions) + 1):
                 if self.instructions[i]['active'] == False:
@@ -323,14 +333,7 @@ class Pipeline:
             if self.finished():
                 break
             self.cc += 1
-        #for i in range(1, len(self.instructions) + 1):
-        #    self.add_stalls(self.instructions[i]['stalls'], self.instructions[i]['stages'])
 
-        #if self.can_proceed(instr):
-            #cur = 0: Can always go to IF => 1
-            #cur = 1: IF.  Can go to 2(ID) if this instr has no data dependencies => 2
-            #cur = 2: ID.  Can always start execution in next cc => 3
-            #cur = 3-9: EXE.  Depends on instruction type. => MEM
             #cur = MEM: Must check waw dependencies and can't write twice in same cc
             #           unless one is a memory write and one is a register write
 

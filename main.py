@@ -2,7 +2,7 @@ import sys
 from pipeline import Pipeline
 import pdb
 
-file_name = 'project-input.0.txt'#input('Enter the name of the input data file:  ')
+file_name = 'input2.txt'#input('Enter the name of the input data file:  ')
 pipeline = Pipeline(file_name)
 timing_file = 't.1'#input('Enter the name of the timing file:  ')
 #sys.stdout = open(timing_file, 'w')
