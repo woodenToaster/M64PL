@@ -4,7 +4,6 @@
 # 12/1/2014
 
 import re
-import pprint
 import pdb
 
 class Pipeline:
@@ -41,8 +40,6 @@ class Pipeline:
         10: 'MEM',
         11: 'WB'
     }
-
-    
 
     def __init__(self, data, fileName=True):
         
@@ -171,7 +168,10 @@ class Pipeline:
         print("")
 
     def can_proceed(self, num):
-        return True
+        data_deps = self.instructions[num]['d_dep']
+        if not data_deps:
+            return True
+        return False
 
     def advance_instr(self, num):
         self.instructions[num]['current_stage'] += 1
@@ -269,9 +269,15 @@ class Pipeline:
         'mult': mult_instr
     }
 
+    def update_dependencies(self, num):
+        for i in range(1, len(self.instructions) + 1):
+            if num in self.instructions[i]['d_dep']:
+                self.instructions[i]['d_dep'].remove(num)
+
     def perform_operation(self, num):
         Pipeline.op_dict[self.instr_types[num]](self, num)
         self.instructions[num]['executed'] == True
+        self.update_dependencies(num)
 
     def done_executing(self, num):
         stages = self.instructions[num]['stages']
@@ -312,13 +318,13 @@ class Pipeline:
                         self.advance_instr(i)
                     else:
                         self.instructions[i]['stalls'] += 1
+                        self.instructions[i]['instr_seq'].append('s')
 
             if self.finished():
                 break
             self.cc += 1
-
-        for i in range(1, len(self.instructions) + 1):
-            self.add_stalls(self.instructions[i]['stalls'], self.instructions[i]['stages'])
+        #for i in range(1, len(self.instructions) + 1):
+        #    self.add_stalls(self.instructions[i]['stalls'], self.instructions[i]['stages'])
 
         #if self.can_proceed(instr):
             #cur = 0: Can always go to IF => 1
