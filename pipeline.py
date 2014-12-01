@@ -147,9 +147,30 @@ class Pipeline:
             print("Error: Invalid instruction")
 
     def add_stalls(self, num_stalls, stages):
+        if num_stalls == 0:
+            return []
+        leading_blanks = 0
+        for i in range(0, len(stages)):
+            if stages[i] == 'IF':
+                break
+            elif stages[i] == "":
+                leading_blanks += 1
+        trailing_blanks = 0
+        for i in reversed(range(0, len(stages))):
+            if stages[i] == 'WB':
+                break
+            elif stages[i] == "":
+                trailing_blanks += 1
+        begin = stages.index('IF')
+        end = stages.index('WB') + 1
+        stages_without_blanks = stages[begin:end]
         for i in range(num_stalls):
-            stages[1:1] = ['s']
-        return stages
+            stages_without_blanks[1:1] = ['s']
+        for i in range(0, leading_blanks):
+            stages_without_blanks.insert(0, "")
+        for i in range(len(stages), len(stages) + trailing_blanks):
+            stages_without_blanks.insert(-1, "")
+        return stages_without_blanks
    
     def print_timing(self):
         print("      ", end="")
@@ -185,10 +206,12 @@ class Pipeline:
 
     def multiple_writes(self, num):
         curr_stage = self.instructions[num]['current_stage']
-        if self.instructions[num]['stages'][curr_stage] == 'WB':
-            for i in range(1, num):
-                if self.instructions[i]['stages'][self.instructions[i]['current_stage']] == 'WB':
-                    return True
+        if curr_stage <= len(self.instructions[num]['stages']):
+            if self.instructions[num]['stages'][curr_stage] == 'WB':
+                for i in range(1, num):
+                    if self.instructions[i]['active'] == True:
+                        if self.instructions[i]['stages'][self.instructions[i]['current_stage']] == 'WB':
+                            return True
         return False
 
     def advance_instr(self, num):
@@ -340,13 +363,26 @@ class Pipeline:
                         if self.done_executing(i) and self.instructions[i]['executed'] == False:
                             self.perform_operation(i)
                         self.advance_instr(i)
+                        if self.multiple_writes(i):
+                            self.instructions[i]['stalls'] += 1
                     else:
-                        self.instructions[i]['stalls'] += 1
                         self.instructions[i]['instr_seq'].append('s')
 
             if self.finished():
                 break
             self.cc += 1
-           
+        for i in range(1, len(self.instructions) + 1):
+            new = self.add_stalls(self.instructions[i]['stalls'], self.instructions[i]['instr_seq'])
+            if new:
+                self.instructions[i]['instr_seq'] = new
+                if len(new) > self.cc:
+                    #need to add diff clock cycles
+                    diff = len(new) - self.cc
+                    self.cc += diff
+                    for j in range(1, len(self.instructions) + 1):
+                        if i != j:
+                            for k in range(diff):
+                                self.instructions[j]['instr_seq'].append("")
+
 
     

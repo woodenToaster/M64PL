@@ -7,6 +7,11 @@ from pipeline import Pipeline
 
 class TestPipeline(unittest.TestCase):
 
+    oldstdout = sys.stdout
+
+    def setUp(self):
+        sys.stdout = TestPipeline.oldstdout
+
     def testPipelineInit(self):
         pipeline = Pipeline('project-input.0.txt')
         self.assertEqual(pipeline.IRegs['R2'], 16)
@@ -114,9 +119,15 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(pipeline.instructions[1], expected)
 
     def testAddStalls(self):
-        pipeline = Pipeline('', False)
+        pipeline = Pipeline('ADD.D, F2, F3, F4', False)
         expected = pipeline.add_stalls(3, ['IF', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
         self.assertEqual(expected, ['IF', 's', 's', 's', 'ID', 'A1', 'A2', 'A3', 'A4', 'MEM', 'WB'])
+
+    def testAddStallsWithBlanks(self):
+        pipeline = Pipeline('ADD.D F2, F3, F4', False)
+        
+        expected = pipeline.add_stalls(1, ['','','','IF', 'ID', 'EXE', 'MEM', 'WB'])
+        self.assertEqual(expected, ['', '', '', 'IF', 's', 'ID', 'EXE', 'MEM', 'WB'])
 
     def testPrintRegisters(self):
         pipeline = Pipeline('', False)
@@ -212,7 +223,6 @@ class TestPipeline(unittest.TestCase):
         pipeline = Pipeline('project-input.0.txt')
         self.assertEqual(pipeline.instructions[5]['w_dep'], [3])
         self.assertEqual(pipeline.instructions[6]['w_dep'], [1])
-
 
 if __name__ == '__main__':
     unittest.main()
