@@ -200,7 +200,7 @@ class Pipeline:
     def can_proceed(self, num):
         data_deps = self.instructions[num]['d_dep']
         write_deps = self.instructions[num]['w_dep']
-        if not data_deps and not write_deps: # and not self.multiple_writes(num):
+        if not data_deps and not write_deps:
             return True
         return False
 
@@ -211,8 +211,19 @@ class Pipeline:
                 for i in range(1, num):
                     if self.instructions[i]['active'] == True:
                         if self.instructions[i]['stages'][self.instructions[i]['current_stage']] == 'WB':
-                            return True
+                            #This is okay if one writes to a register and one writes to memory
+                            type1 = self.instr_types[num]
+                            type2 = self.instr_types[i]
+                            if self.is_reg_write(type1) and self.is_reg_write(type2):
+                                return True
+                            elif not self.is_reg_write(type1) and not self.is_reg_write(type2):
+                                return True
         return False
+
+    def is_reg_write(self, t):
+        if t == 'store':
+            return False
+        return True
 
     def advance_instr(self, num):
         self.instructions[num]['current_stage'] += 1
@@ -376,7 +387,7 @@ class Pipeline:
             if new:
                 self.instructions[i]['instr_seq'] = new
                 if len(new) > self.cc:
-                    #need to add diff clock cycles
+                    #need to add diff clock cycles and fill in other instructions with blanks
                     diff = len(new) - self.cc
                     self.cc += diff
                     for j in range(1, len(self.instructions) + 1):
