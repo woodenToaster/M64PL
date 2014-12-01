@@ -1,6 +1,5 @@
 import sys
 from pipeline import Pipeline
-import pdb
 
 file_name = 'input2.txt'#input('Enter the name of the input data file:  ')
 pipeline = Pipeline(file_name)

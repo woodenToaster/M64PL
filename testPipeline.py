@@ -213,6 +213,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(pipeline.instructions[5]['w_dep'], [3])
         self.assertEqual(pipeline.instructions[6]['w_dep'], [1])
 
+
 if __name__ == '__main__':
     unittest.main()
 

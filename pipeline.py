@@ -178,9 +178,17 @@ class Pipeline:
 
     def can_proceed(self, num):
         data_deps = self.instructions[num]['d_dep']
-        #write_deps = self.instuctions[num]['w_dep']
-        if not data_deps: # and not write_deps:
+        write_deps = self.instructions[num]['w_dep']
+        if not data_deps and not write_deps: # and not self.multiple_writes(num):
             return True
+        return False
+
+    def multiple_writes(self, num):
+        curr_stage = self.instructions[num]['current_stage']
+        if self.instructions[num]['stages'][curr_stage] == 'WB':
+            for i in range(1, num):
+                if self.instructions[i]['stages'][self.instructions[i]['current_stage']] == 'WB':
+                    return True
         return False
 
     def advance_instr(self, num):
@@ -280,25 +288,31 @@ class Pipeline:
         'mult': mult_instr
     }
 
-    def update_dependencies(self, num):
+    def update_data_dependencies(self, num):
         for i in range(1, len(self.instructions) + 1):
             if num in self.instructions[i]['d_dep']:
                 self.instructions[i]['d_dep'].remove(num)
 
+    def update_write_dependencies(self, num):
+        for i in range(1, len(self.instructions) + 1):
+            if num in self.instructions[i]['w_dep']:
+                self.instructions[i]['w_dep'].remove(num)
+
     def perform_operation(self, num):
         Pipeline.op_dict[self.instr_types[num]](self, num)
         self.instructions[num]['executed'] == True
-        self.update_dependencies(num)
+        self.update_data_dependencies(num)
+        self.update_write_dependencies(num)
 
     def done_executing(self, num):
         stages = self.instructions[num]['stages']
         current_stage = self.instructions[num]['current_stage']
 
-        if stages == Pipeline.data_stages and current_stage == 3:
+        if stages == Pipeline.data_stages and current_stage >= 3:
             return True
-        if stages == Pipeline.add_stages and current_stage == 6:
+        if stages == Pipeline.add_stages and current_stage >= 6:
             return True
-        if stages == Pipeline.mult_stages and current_stage == 9:
+        if stages == Pipeline.mult_stages and current_stage >= 9:
             return True
         
         return False
@@ -333,8 +347,6 @@ class Pipeline:
             if self.finished():
                 break
             self.cc += 1
-
-            #cur = MEM: Must check waw dependencies and can't write twice in same cc
-            #           unless one is a memory write and one is a register write
+           
 
     
